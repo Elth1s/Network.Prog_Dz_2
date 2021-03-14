@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Server
 {
@@ -32,35 +34,78 @@ namespace Server
                 {
                     newUser.Login = sr.ReadLine();
                     newUser.Password = sr.ReadLine();
-                    users.Add(newUser);
+                    users.Add(new UserInfo() { Login = newUser.Login,Password = newUser.Password });
                 }
+                sr.Close();
             }
 
-
-            try
+            XmlDocument xdoc = new XmlDocument();
+            xdoc.Load("https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=11");
+            XmlNodeList xNodelst = xdoc.DocumentElement.SelectNodes("//exchangerates/row");
+            Dictionary<string, decimal> currencies = new Dictionary<string, decimal>();
+            foreach (XmlNode xNode in xNodelst)
             {
-                // связываем сокет с локальной точкой, по которой будем принимать данные
-                listenSocket.Bind(ipPoint);
-
-                // начинаем прослушивание
-                listenSocket.Listen(10);
-
-                Console.WriteLine("Server started! Waiting for connection...");
-
-                while (true)
+                string name = xNode.SelectSingleNode("exchangerate").SelectSingleNode("@ccy").Value;
+                string buy = xNode.SelectSingleNode("exchangerate").SelectSingleNode("@buy").Value;
+                if (name == "BTC")
+                    currencies.Add("UAH", 1);
+                else
+                    currencies.Add(name, decimal.Parse(buy, CultureInfo.InvariantCulture));
+            }
+            int action = 0;
+            do
+            {
+                Console.WriteLine("1.Add User");
+                Console.WriteLine("2.Start server");
+                Console.WriteLine();
+                Console.Write("Select: ");
+                action = int.Parse(Console.ReadLine());
+                switch (action)
                 {
-                    Socket handler = listenSocket.Accept();
+                    case 1:
+                        UserInfo newUser = new UserInfo();
+                        Console.Write("Enter login: ");
+                        newUser.Login = Console.ReadLine();
+                        Console.Write("Enter password: ");
+                        newUser.Password = Console.ReadLine();
+                        users.Add(newUser);
+                        using (StreamWriter sw = new StreamWriter("users.txt", true, System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(newUser.Login);
+                            sw.WriteLine(newUser.Password);
+                        }
+                        break;
+                    case 2:
+                        try
+                        {
+                            // связываем сокет с локальной точкой, по которой будем принимать данные
+                            listenSocket.Bind(ipPoint);
 
-                    Task.Run(() => ServClient(handler, semaphore));
+                            // начинаем прослушивание
+                            listenSocket.Listen(10);
+
+                            Console.WriteLine("Server started! Waiting for connection...");
+
+                            while (true)
+                            {
+                                Socket handler = listenSocket.Accept();
+
+                                Task.Run(() => ServClient(handler, semaphore, currencies));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                        break;
+                    default:
+                        break;
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            } while (true);
+            
         }
 
-        static void ServClient(Socket client, Semaphore semaphore)
+        static void ServClient(Socket client, Semaphore semaphore, Dictionary<string, decimal> currencies)
         {
             if (!semaphore.WaitOne(200))
             {
@@ -75,6 +120,7 @@ namespace Server
                 int count = 0;
                 while (true)
                 {
+                    
                     // получаем сообщение
                     StringBuilder builder = new StringBuilder();
                     int bytes = 0; // количество полученных байтов
@@ -89,7 +135,14 @@ namespace Server
 
                     string[] words = builder.ToString().Split(new char[] { ' '}, StringSplitOptions.RemoveEmptyEntries);
 
-                    if(words[0] == "<Login>")
+                    if (count >= 5)
+                    {
+                        data = Encoding.Unicode.GetBytes("Number of requests used");
+                        client.Send(data);
+                        break;
+                    }
+
+                    if (words[0] == "<Login>")
                     {
                         for (int i = 0; i < users.Count; i++)
                         {
@@ -99,12 +152,30 @@ namespace Server
                             }
                         }
                     }
+                    else if (words[0] == "<Convert>")
+                    {
+                        foreach (var item in currencies)
+                        {
+                            if (words[1] == item.Key)
+                            {
+                                foreach (var item2 in currencies)
+                                {
+                                    if(words[2] == item2.Key)
+                                    {
+                                        decimal result = item.Value / item2.Value;
+                                        client.Send(Encoding.Unicode.GetBytes(result.ToString()));
+                                    }
+                                }
+                            }
+                        }
+                    }
                     else
                     {
                         client.Send(Encoding.Unicode.GetBytes("Error"));
                     }
 
                     Console.WriteLine($"{client.RemoteEndPoint} - {builder.ToString()} at {DateTime.Now.ToShortTimeString()}");
+                    count++;
                 }
             }
             catch (Exception ex)
@@ -121,15 +192,5 @@ namespace Server
             }
         }
 
-        static long GetFactorial(long number)
-        {
-            long result = 1;
-            for (int i = 2; i <= number; i++)
-            {
-                result *= i;
-                Thread.Sleep(500);
-            }
-            return result;
-        }
     }
 }

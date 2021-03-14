@@ -49,7 +49,7 @@ namespace Client
             {
                 text += $" {LoginTextBox.Text} {PasswordTextBox.Text}";
             }
-            else if (text == "<Convert>" && isConnectedUser == true)
+            else if (text == "<Convert>" && isConnectedUser == true && selectedRadioButtonFirstGroup != "" && selectedRadioButtonSecondGroup != "")
             {
                 text += $" {selectedRadioButtonFirstGroup} {selectedRadioButtonSecondGroup}";
             }

@@ -35,12 +35,12 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <RadioButton GroupName="firstColumn" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="FirstGroupRadioButton_Click">UAH</RadioButton>
-            <RadioButton GroupName="firstColumn" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="FirstGroupRadioButton_Click">RUB</RadioButton>
+            <RadioButton GroupName="firstColumn" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="FirstGroupRadioButton_Click" Content="RUR"/>
             <RadioButton GroupName="firstColumn" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="FirstGroupRadioButton_Click">USD</RadioButton>
             <RadioButton GroupName="firstColumn" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="FirstGroupRadioButton_Click">EUR</RadioButton>
 
             <RadioButton GroupName="secondColumn" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="SecondGroupRadioButton_Click">UAH</RadioButton>
-            <RadioButton GroupName="secondColumn" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="SecondGroupRadioButton_Click">RUB</RadioButton>
+            <RadioButton GroupName="secondColumn" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="SecondGroupRadioButton_Click">RUR</RadioButton>
             <RadioButton GroupName="secondColumn" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="SecondGroupRadioButton_Click">USD</RadioButton>
             <RadioButton GroupName="secondColumn" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Click="SecondGroupRadioButton_Click">EUR</RadioButton>
         </Grid>
